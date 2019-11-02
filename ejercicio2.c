@@ -1,62 +1,61 @@
-// C program to illustrate factorial calculation 
-// using fork() in C for Linux 
-#include <stdio.h> 
-#include <unistd.h> 
-#include <sys/wait.h> 
-#include <sys/types.h>  
-#include <string.h> 
-#include <stdlib.h>  
-#include <sys/ipc.h>  
-#include <sys/shm.h> 
+#include "stdio.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "sys/wait.h"
+#include "sys/types.h"
 
-int main(int argc , char *argv[] ){ 
+//Creamos variable necesaria para crear procesos
+pid_t pid;
 
-	//Declaracion de variables para las pipes
-	int fd1[2];  // Used to store two ends of first pipe 
-    	int fd2[2];  // Used to store two ends of second pipe 
+//Funcion que calcula el factorial
+int factorial(int n){
+    if(n > 1){
+        pid =fork();
+        if(pid <0){
+            printf("Error al crear un proceso hijo\n");
+//Se regresa -1 cuando el proceso hijo no se puedo crear
+            exit(-1);
+        }
+        else if(pid>0){
+        int aux;
+        waitpid(pid,&aux, 0);
+//Se verifica si el proceso hijo fue terminado con exito
+            if(WIFEXITED(aux)){
+                aux = WEXITSTATUS(aux);
+                if(aux != -1){
+//Se calcula el factorial si el proceso hijo se creo con exito y el estado de regreso no fue -1
+                    return aux*factorial(n-1);
+                }
+                else{
+                    printf("Error al crear un proceso hijo\n");
+                    exit(0);
+                }
+            }
+            else{
+                printf("Error en el proceso hijo\n");
+            }
+        }else if(pid == 0){
+            exit(n);
+        }
+    }
+    return 1;
+}
 
-	int resultado = 1;
-	//Verificando que se crean las pipes
-	if (pipe(fd1)==-1){ 
-		fprintf(stderr, "Pipe Failed" ); 
-		return 1; 
-	} 
-	if (pipe(fd2)==-1){ 
-		fprintf(stderr, "Pipe Failed" ); 
-		return 1; 
-	} 
-
-	//Declaracion de variables generales	
-	pid_t pid;
-	int n; 
-	
-	//Verificando la cantidad de argumentos
-	if (argc != 2) { 
-		printf("arg missing or exceeding\n"); 
-		exit(0); 
-	} 
-
-	// Verificamos que el numero sea mayor a 0 
-	if ( atoi ( argv[1] ) <0 ){ 
-		printf("negative number entered %d\n", atoi(argv[1])); 
-		exit(0); 
-	} 
-
-	// Convertimos el valor a entero y lo guardamos en n 
-	n = atoi(argv[1]);
-	
-	
-	//Creamos procesos 
-	for(int i=0;i<n;i++){ // loop will run n times (n=5) 
-        	if(fork() == 0){ 
-            		printf("SOY EL PROCESO HIJO NUMERO: %d\n", n);
-            		exit(0); 
-        	} 
-    	} 
-	for(int i=0;i<5;i++){
-	    wait(NULL);
-	} // loop will run n times (n=5) 
-		 	
-
-	 return 0;
-} 
+int main(int argc, char *argv[]){
+	printf("********************** Ejercicio 2 **********************\n");
+    if(argc ==2){
+//Se convierte el valor ingresado a entero
+        int n = atoi(argv[1]);
+        if(n>=0){
+            printf("El valor ingresado es: %d \nEl resultado del factorial es: %d\n", n, factorial(n));
+        }
+        else{
+            printf("Argumento ingresado invalido, el numero debe de ser mayor a 0\n");
+        }
+    }else if (argc < 2)
+    {
+        printf("Falta argumento(s)");
+    }
+    printf("********************** Fin **********************\n");
+    return 0;
+}
